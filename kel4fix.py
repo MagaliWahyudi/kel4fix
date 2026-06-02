@@ -521,6 +521,10 @@ with st.sidebar:
     ph_val = st.number_input("pH", min_value=0.0, max_value=14.0, value=7.0, step=0.1,
                              help="Skala 0–14. Baku mutu: 6.5–8.0")
 
+    # Inisialisasi awal nilai default agar tidak eror jika dikosongkan/di-slide ke kiri
+    bod_val = 0.0
+    cod_val = 0.0
+
     if input_mode == "📊 Langsung (Nilai)":
         bod_val = st.number_input("BOD (mg/L)", min_value=0.0, max_value=200.0, value=2.0, step=0.1,
                                   help="Biochemical Oxygen Demand. Baku mutu: < 3 mg/L")
@@ -544,8 +548,9 @@ with st.sidebar:
 
         if bod_v_sampel > 0:
             bod_val = round((bod_v_blanko - bod_v_sampel_t) * bod_n * 8000 / bod_v_sampel, 3)
-        else:
-            bod_val = 0.0
+            if bod_val < 0:  # Mencegah nilai minus jika salah input angka
+                bod_val = 0.0
+
         st.markdown(f"""<div style="background:rgba(14,184,164,0.08); border:1px solid rgba(14,184,164,0.3);
                         border-radius:8px; padding:8px 14px; font-size:0.83rem; margin:6px 0 14px 0;">
                         BOD terhitung: <b style="color:#0EB8A4; font-family:'Space Mono',monospace;">
@@ -568,8 +573,9 @@ with st.sidebar:
 
         if cod_v_sampel > 0:
             cod_val = round((cod_v_blanko - cod_v_sampel_t) * cod_n * 8000 / cod_v_sampel, 3)
-        else:
-            cod_val = 0.0
+            if cod_val < 0:  # Mencegah nilai minus jika salah input angka
+                cod_val = 0.0
+
         st.markdown(f"""<div style="background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.3);
                         border-radius:8px; padding:8px 14px; font-size:0.83rem; margin:6px 0 4px 0;">
                         COD terhitung: <b style="color:#8B5CF6; font-family:'Space Mono',monospace;">
@@ -604,6 +610,7 @@ with st.sidebar:
 ika_score, ph_si, bod_si, cod_si = calc_ika(ph_val, bod_val, cod_val)
 ika_cat, ika_color = ika_category(ika_score)
 
+# Mendapatkan status parameter (Logika aman dari error)
 ph_label,  ph_cls,  _ = get_ph_status(ph_val)
 bod_label, bod_cls, _ = get_bod_status(bod_val)
 cod_label, cod_cls, _ = get_cod_status(cod_val)
@@ -745,7 +752,7 @@ with tab1:
             """)
         with col_b:
             if cod_cls == "good":
-                st.markdown(f'<div class="info-box">✅ <strong>COD {cod_val} mg/L</strong> — Memenuhi baku mutu. Beban pencemar organik dan kimia masih dalam batas aman.</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="info-box">✅ <strong>COD {cod_val} mg/L</strong> — Memenuhi baku mutu. Beban pencemar organik and kimia masih dalam batas aman.</div>', unsafe_allow_html=True)
             elif cod_cls == "warn":
                 st.markdown(f'<div class="warn-box">⚠️ <strong>COD {cod_val} mg/L</strong> — Melampaui baku mutu. Indikasi pencemaran bahan kimia organik. Perlu investigasi sumber pencemar.</div>', unsafe_allow_html=True)
             else:
@@ -797,7 +804,7 @@ with tab1:
             </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════
-#  TAB 2 — REFERENSI
+#  TAB 2 — REFERENSI (Tanda ### Telah Dihapus)
 # ══════════════════════════════════════════════
 with tab2:
     st.markdown('<div class="sec-head">Baku Mutu Air — PP No. 22 Tahun 2021</div>',
@@ -934,7 +941,6 @@ with tab3:
 
     fig_bar = make_subplots(rows=1, cols=3, subplot_titles=["pH", "BOD (mg/L)", "COD (mg/L)"])
 
-    # pH: optimal = 7.25 (tengah 6.5-8.0)
     fig_bar.add_trace(go.Bar(x=["Nilai Kamu"], y=[ph_val],
                               marker_color=("#22C55E" if ph_cls=="good" else "#F59E0B" if ph_cls=="warn" else "#EF4444"),
                               name="pH"), row=1, col=1)
