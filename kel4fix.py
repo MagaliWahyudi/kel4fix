@@ -50,6 +50,11 @@ html, body, [class*="css"] {
 section[data-testid="stSidebar"] {
     background: var(--card);
     border-right: 1px solid var(--border);
+    z-index: 9999 !important;
+}
+
+button[kind="header"] {
+    z-index: 10000 !important;
 }
 section[data-testid="stSidebar"] * { color: var(--text) !important; }
 
@@ -812,6 +817,7 @@ with tab2:
 
     st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("#### 🟢 BOD — Biochemical Oxygen Demand")
+    st.markdown("""
     <div style="font-size:0.83rem; color:#7A8BA6; margin-bottom:10px;">
     Baku mutu BOD air kelas II: <b style="color:#0EB8A4;">≤ 3 mg/L</b>
     </div>""", unsafe_allow_html=True)
@@ -819,6 +825,7 @@ st.markdown("#### 🟢 BOD — Biochemical Oxygen Demand")
 
     st.markdown("<br>", unsafe_allow_html=True)
 st.markdown("#### 🔴 COD — Chemical Oxygen Demand")
+    st.markdown("""
     <div style="font-size:0.83rem; color:#7A8BA6; margin-bottom:10px;">
     Baku mutu COD air kelas II: <b style="color:#0EB8A4;">≤ 25 mg/L</b>
     </div>""", unsafe_allow_html=True)
@@ -1044,4 +1051,3 @@ with tab4:
         Built with Streamlit & Plotly
     </div>
     """, unsafe_allow_html=True)
-
