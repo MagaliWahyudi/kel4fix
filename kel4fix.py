@@ -375,24 +375,27 @@ if "web_desc" not in st.session_state:
     st.session_state.web_desc = (
         "Aplikasi ini dikembangkan untuk membantu analisis kualitas air "
         "berdasarkan parameter kimia utama yaitu pH, BOD, dan COD. "
-        "Gunakan panel input data di bawah banner halaman utama untuk memasukkan data pengukuran."
+        "Gunakan slider di panel kiri untuk memasukkan nilai pengukuran lapangan."
     )
-# Tambahan session state pelacak mode input aktif halaman utama
-if "main_input_mode" not in st.session_state:
-    st.session_state.main_input_mode = "📊 Langsung (Nilai)"
 
 # ─────────────────────────────────────────────
 #  REFERENCE DATA
 # ─────────────────────────────────────────────
 PH_REF = [
-    {"Kategori": "Sangat Asam / Sangat Basa (Berbahaya)", "Rentang": "< 5.0 atau > 9.0",
+    {"Kategori": "Sangat Asam (Berbahaya)", "Rentang": "< 5.0",
      "Status": "💀 Tercemar Berat", "Kelas": "bad"},
-    {"Kategori": "Asam / Basa Ringan (Tercemar Sedang)", "Rentang": "5.0 – 6.0 atau 8.5 – 9.0",
+    {"Kategori": "Asam Ringan (Tercemar Sedang)", "Rentang": "5.0 – 6.0",
      "Status": "⚠️ Tercemar Sedang", "Kelas": "warn"},
-    {"Kategori": "Mendekati Normal", "Rentang": "6.0 – 6.5 atau 8.0 – 8.5",
+    {"Kategori": "Asam Lemah (Mendekati Normal)", "Rentang": "6.0 – 6.5",
      "Status": "🟡 Tercemar Ringan", "Kelas": "warn"},
     {"Kategori": "Normal / Baku Mutu", "Rentang": "6.5 – 8.0",
      "Status": "✅ Memenuhi Baku Mutu", "Kelas": "good"},
+    {"Kategori": "Basa Lemah (Mendekati Normal)", "Rentang": "8.0 – 8.5",
+     "Status": "🟡 Tercemar Ringan", "Kelas": "warn"},
+    {"Kategori": "Basa Ringan (Tercemar Sedang)", "Rentang": "8.5 – 9.0",
+     "Status": "⚠️ Tercemar Sedang", "Kelas": "warn"},
+    {"Kategori": "Sangat Basa (Berbahaya)", "Rentang": "> 9.0",
+     "Status": "💀 Tercemar Berat", "Kelas": "bad"},
 ]
 BOD_REF = [
     {"Kategori": "Sangat Baik (Air Bersih)", "Rentang": "< 2 mg/L",
@@ -425,12 +428,18 @@ COD_REF = [
 def get_ph_status(v):
     if 6.5 <= v <= 8.0:
         return "Memenuhi Baku Mutu", "good", 100
-    elif (6.0 <= v < 6.5) or (8.0 < v <= 8.5):
-        return "Tercemar Ringan", "warn", 60
-    elif (5.0 <= v < 6.0) or (8.5 < v <= 9.0):
-        return "Tercemar Sedang", "warn", 35
+    elif 6.0 <= v < 6.5:
+        return "Asam Lemah (Tercemar Ringan)", "warn", 60
+    elif 8.0 < v <= 8.5:
+        return "Basa Lemah (Tercemar Ringan)", "warn", 60
+    elif 5.0 <= v < 6.0:
+        return "Asam Ringan (Tercemar Sedang)", "warn", 35
+    elif 8.5 < v <= 9.0:
+        return "Basa Ringan (Tercemar Sedang)", "warn", 35
+    elif v < 5.0:
+        return "Sangat Asam (Tercemar Berat)", "bad", 10
     else:
-        return "Tercemar Berat", "bad", 10
+        return "Sangat Basa (Tercemar Berat)", "bad", 10
 
 def get_bod_status(v):
     if v < 2:
@@ -511,7 +520,71 @@ with st.sidebar:
     <hr style="border:none; border-top:1px solid #242C3D; margin:12px 0 20px 0;">
     """, unsafe_allow_html=True)
 
-    # Mempertahankan st.expander Pengaturan Aplikasi asli agar tidak mengurangi fitur
+    st.markdown("**📥 Masukkan Nilai Parameter**")
+
+    input_mode = st.radio("Mode Input", ["📊 Langsung (Nilai)", "🧪 Dari Titrasi"], horizontal=True)
+
+    # ── pH (always direct input) ──
+    ph_val = st.number_input("pH", min_value=0.0, max_value=14.0, value=7.0, step=0.1,
+                             help="Skala 0–14. Baku mutu: 6.5–8.0")
+
+    if input_mode == "📊 Langsung (Nilai)":
+        bod_val = st.number_input("BOD (mg/L)", min_value=0.0, max_value=200.0, value=2.0, step=0.1,
+                                  help="Biochemical Oxygen Demand. Baku mutu: < 3 mg/L")
+        cod_val = st.number_input("COD (mg/L)", min_value=0.0, max_value=500.0, value=15.0, step=0.1,
+                                  help="Chemical Oxygen Demand. Baku mutu: < 25 mg/L")
+    else:
+        # ── BOD dari Titrasi Winkler ──
+        st.markdown("""<div style="font-size:0.8rem; color:#0EB8A4; font-family:'Space Mono',monospace;
+                       margin:10px 0 6px 0;">🔬 BOD — Titrasi Winkler</div>""", unsafe_allow_html=True)
+        st.markdown("""<div style="font-size:0.75rem; color:#7A8BA6; margin-bottom:8px;">
+            Rumus: BOD = (V_titran_blanko − V_titran_sampel) × N_Na₂S₂O₃ × 8000 / V_sampel
+            </div>""", unsafe_allow_html=True)
+
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            bod_v_blanko   = st.number_input("V Titran Blanko (mL)", min_value=0.0, value=10.0, step=0.01, key="bod_vb")
+            bod_v_sampel_t = st.number_input("V Titran Sampel (mL)", min_value=0.0, value=8.5,  step=0.01, key="bod_vs")
+        with col_b2:
+            bod_n          = st.number_input("N Na₂S₂O₃", min_value=0.0, value=0.025, step=0.001, format="%.4f", key="bod_n")
+            bod_v_sampel   = st.number_input("V Sampel (mL)",         min_value=0.1,  value=100.0, step=1.0,  key="bod_ml")
+
+        if bod_v_sampel > 0:
+            bod_val = round((bod_v_blanko - bod_v_sampel_t) * bod_n * 8000 / bod_v_sampel, 3)
+        else:
+            bod_val = 0.0
+        st.markdown(f"""<div style="background:rgba(14,184,164,0.08); border:1px solid rgba(14,184,164,0.3);
+                        border-radius:8px; padding:8px 14px; font-size:0.83rem; margin:6px 0 14px 0;">
+                        BOD terhitung: <b style="color:#0EB8A4; font-family:'Space Mono',monospace;">
+                        {bod_val} mg/L</b></div>""", unsafe_allow_html=True)
+
+        # ── COD dari Titrasi Permanganometri / Dikromat ──
+        st.markdown("""<div style="font-size:0.8rem; color:#8B5CF6; font-family:'Space Mono',monospace;
+                       margin:6px 0 6px 0;">🔬 COD — Titrasi Dikromat / Permanganometri</div>""", unsafe_allow_html=True)
+        st.markdown("""<div style="font-size:0.75rem; color:#7A8BA6; margin-bottom:8px;">
+            Rumus: COD = (V_blanko − V_sampel) × N_titran × 8000 / V_sampel
+            </div>""", unsafe_allow_html=True)
+
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            cod_v_blanko   = st.number_input("V Titran Blanko (mL)", min_value=0.0, value=15.0, step=0.01, key="cod_vb")
+            cod_v_sampel_t = st.number_input("V Titran Sampel (mL)", min_value=0.0, value=12.0, step=0.01, key="cod_vs")
+        with col_c2:
+            cod_n          = st.number_input("N Titran (FAS/KMnO₄)", min_value=0.0, value=0.1,  step=0.001, format="%.4f", key="cod_n")
+            cod_v_sampel   = st.number_input("V Sampel (mL)",          min_value=0.1, value=20.0, step=1.0,  key="cod_ml")
+
+        if cod_v_sampel > 0:
+            cod_val = round((cod_v_blanko - cod_v_sampel_t) * cod_n * 8000 / cod_v_sampel, 3)
+        else:
+            cod_val = 0.0
+        st.markdown(f"""<div style="background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.3);
+                        border-radius:8px; padding:8px 14px; font-size:0.83rem; margin:6px 0 4px 0;">
+                        COD terhitung: <b style="color:#8B5CF6; font-family:'Space Mono',monospace;">
+                        {cod_val} mg/L</b></div>""", unsafe_allow_html=True)
+
+    st.markdown("<hr style='border:none;border-top:1px solid #242C3D;margin:20px 0;'>",
+                unsafe_allow_html=True)
+
     with st.expander("⚙️  Pengaturan Aplikasi"):
         new_app = st.text_input("Nama Aplikasi", value=st.session_state.app_name)
         new_grp = st.text_input("Nama Kelompok", value=st.session_state.group_name)
@@ -533,6 +606,16 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
+#  CALCULATE
+# ─────────────────────────────────────────────
+ika_score, ph_si, bod_si, cod_si = calc_ika(ph_val, bod_val, cod_val)
+ika_cat, ika_color = ika_category(ika_score)
+
+ph_label,  ph_cls,  _ = get_ph_status(ph_val)
+bod_label, bod_cls, _ = get_bod_status(bod_val)
+cod_label, cod_cls, _ = get_cod_status(cod_val)
+
+# ─────────────────────────────────────────────
 #  MAIN — HERO
 # ─────────────────────────────────────────────
 st.markdown(f"""
@@ -542,113 +625,6 @@ st.markdown(f"""
   <p class="hero-sub">{st.session_state.web_desc}</p>
 </div>
 """, unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────
-#  FITUR TOMBOL & PANEL INPUT DI HALAMAN UTAMA
-# ─────────────────────────────────────────────
-st.markdown('<div class="sec-head">🎛️ Panel Kontrol Mode Input Data</div>', unsafe_allow_html=True)
-
-# Membuat tata letak baris tombol interaktif halaman utama
-btn_col1, btn_col2 = st.columns(2)
-with btn_col1:
-    if st.button("📊 MODE 1: Input Nilai Langsung (PH/BOD/COD Sudah Diketahui)"):
-        st.session_state.main_input_mode = "📊 Langsung (Nilai)"
-with btn_col2:
-    if st.button("🧪 MODE 2: Hitung dari Titrasi (Laboratorium)"):
-        st.session_state.main_input_mode = "🧪 Dari Titrasi"
-
-# Menampilkan indikator status mode yang sedang aktif saat ini
-st.markdown(f"""
-<div style="font-size:0.9rem; margin-bottom:20px; color:var(--muted);">
-    Mode aktif saat ini: <span style="color:var(--teal); font-weight:bold; font-family:'Space Mono', monospace;">{st.session_state.main_input_mode}</span>
-</div>
-""", unsafe_allow_html=True)
-
-# Inisialisasi variabel default sebelum kondisional penentuan nilai input
-ph_val = 7.0
-bod_val = 2.0
-cod_val = 15.0
-
-# Wadah penampung form input data lapangan utama
-with st.container():
-    st.markdown('<div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:25px;">', unsafe_allow_html=True)
-    
-    # Input umum pH (Selalu muncul di kedua mode)
-    ph_val = st.number_input("Masukkan Nilai pH", min_value=0.0, max_value=14.0, value=7.0, step=0.1,
-                             help="Skala 0–14. Baku mutu: 6.5–8.0", key="main_ph_input")
-    
-    if st.session_state.main_input_mode == "📊 Langsung (Nilai)":
-        st.markdown("<p style='color:var(--teal); font-weight:600; margin-top:10px;'>Masukkan Nilai Parameter Langsung:</p>", unsafe_allow_html=True)
-        col_direct1, col_direct2 = st.columns(2)
-        with col_direct1:
-            bod_val = st.number_input("BOD (mg/L)", min_value=0.0, max_value=200.0, value=2.0, step=0.1,
-                                      help="Biochemical Oxygen Demand. Baku mutu: < 3 mg/L", key="main_bod_direct")
-        with col_direct2:
-            cod_val = st.number_input("COD (mg/L)", min_value=0.0, max_value=500.0, value=15.0, step=0.1,
-                                      help="Chemical Oxygen Demand. Baku mutu: < 25 mg/L", key="main_cod_direct")
-            
-    elif st.session_state.main_input_mode == "🧪 Dari Titrasi":
-        # ── BOD dari Titrasi Winkler ──
-        st.markdown("""<div style="font-size:0.9rem; color:#0EB8A4; font-family:'Space Mono',monospace;
-                       margin:15px 0 6px 0; font-weight:bold;">🔬 Perhitungan Parameter BOD — Titrasi Winkler</div>""", unsafe_allow_html=True)
-        st.markdown("""<div style="font-size:0.75rem; color:#7A8BA6; margin-bottom:8px;">
-            Rumus: BOD = (V_titran_blanko − V_titran_sampel) × N_Na₂S₂O₃ × 8000 / V_sampel
-            </div>""", unsafe_allow_html=True)
-
-        col_b1, col_b2 = st.columns(2)
-        with col_b1:
-            bod_v_blanko   = st.number_input("V Titran Blanko (mL)", min_value=0.0, value=10.0, step=0.01, key="main_bod_vb")
-            bod_v_sampel_t = st.number_input("V Titran Sampel (mL)", min_value=0.0, value=8.5,  step=0.01, key="main_bod_vs")
-        with col_b2:
-            bod_n          = st.number_input("N Na₂S₂O₃", min_value=0.0, value=0.025, step=0.001, format="%.4f", key="main_bod_n")
-            bod_v_sampel   = st.number_input("V Sampel (mL)",         min_value=0.1,  value=100.0, step=1.0,  key="main_bod_ml")
-
-        if bod_v_sampel > 0:
-            bod_val = round((bod_v_blanko - bod_v_sampel_t) * bod_n * 8000 / bod_v_sampel, 3)
-        else:
-            bod_val = 0.0
-            
-        st.markdown(f"""<div style="background:rgba(14,184,164,0.08); border:1px solid rgba(14,184,164,0.3);
-                        border-radius:8px; padding:10px 14px; font-size:0.85rem; margin:6px 0 20px 0;">
-                        Hasil Perhitungan Terhitung BOD: <b style="color:#0EB8A4; font-family:'Space Mono',monospace;">
-                        {bod_val} mg/L</b></div>""", unsafe_allow_html=True)
-
-        # ── COD dari Titrasi Permanganometri / Dikromat ──
-        st.markdown("""<div style="font-size:0.9rem; color:#8B5CF6; font-family:'Space Mono',monospace;
-                       margin:15px 0 6px 0; font-weight:bold;">🔬 Perhitungan Parameter COD — Titrasi Dikromat / Permanganometri</div>""", unsafe_allow_html=True)
-        st.markdown("""<div style="font-size:0.75rem; color:#7A8BA6; margin-bottom:8px;">
-            Rumus: COD = (V_blanko − V_sampel) × N_titran × 8000 / V_sampel
-            </div>""", unsafe_allow_html=True)
-
-        col_c1, col_c2 = st.columns(2)
-        with col_c1:
-            cod_v_blanko   = st.number_input("V Titran Blanko (mL)", min_value=0.0, value=15.0, step=0.01, key="main_cod_vb")
-            cod_v_sampel_t = st.number_input("V Titran Sampel (mL)", min_value=0.0, value=12.0, step=0.01, key="main_cod_vs")
-        with col_c2:
-            cod_n          = st.number_input("N Titran (FAS/KMnO₄)", min_value=0.0, value=0.1,  step=0.001, format="%.4f", key="main_cod_n")
-            cod_v_sampel   = st.number_input("V Sampel (mL)",          min_value=0.1, value=20.0, step=1.0,  key="main_cod_ml")
-
-        if cod_v_sampel > 0:
-            cod_val = round((cod_v_blanko - cod_v_sampel_t) * cod_n * 8000 / cod_v_sampel, 3)
-        else:
-            cod_val = 0.0
-            
-        st.markdown(f"""<div style="background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.3);
-                        border-radius:8px; padding:10px 14px; font-size:0.85rem; margin:6px 0 4px 0;">
-                        Hasil Perhitungan Terhitung COD: <b style="color:#8B5CF6; font-family:'Space Mono',monospace;">
-                        {cod_val} mg/L</b></div>""", unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────
-#  CALCULATE (LOGIKA EVALUASI UTAMA)
-# ─────────────────────────────────────────────
-ika_score, ph_si, bod_si, cod_si = calc_ika(ph_val, bod_val, cod_val)
-ika_cat, ika_color = ika_category(ika_score)
-
-ph_label,  ph_cls,  _ = get_ph_status(ph_val)
-bod_label, bod_cls, _ = get_bod_status(bod_val)
-cod_label, cod_cls, _ = get_cod_status(cod_val)
 
 # ─────────────────────────────────────────────
 #  TABS
@@ -733,7 +709,7 @@ with tab1:
             elif ph_cls == "warn":
                 st.markdown(f'<div class="warn-box">⚠️ <strong>pH {ph_val}</strong> — Nilai ini berada di luar baku mutu optimal. Air menunjukkan tanda-tanda asam/basa ringan. Perlu monitoring lebih lanjut.</div>', unsafe_allow_html=True)
             else:
-                st.markdown(f'<div class="bad-box">🚨 <strong>pH {ph_val}</strong> — Nilai ekstrem! Air terindikasi sangat asam atau basa. Berbahaya bagi biota air and tidak layak untuk penggunaan langsung.</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="bad-box">🚨 <strong>pH {ph_val}</strong> — Nilai ekstrem! Air terindikasi sangat asam atau basa. Berbahaya bagi biota air dan tidak layak untuk penggunaan langsung.</div>', unsafe_allow_html=True)
 
     # BOD
     with st.expander("🟢  BOD — Biochemical Oxygen Demand", expanded=True):
@@ -776,7 +752,7 @@ with tab1:
             """)
         with col_b:
             if cod_cls == "good":
-                st.markdown(f'<div class="info-box">✅ <strong>COD {cod_val} mg/L</strong> — Memenuhi baku mutu. Beban pencemar organik dan kimia masih dalam batas aman.</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="info-box">✅ <strong>COD {cod_val} mg/L</strong> — Memenuhi baku mutu. Beban pencemar organik and kimia masih dalam batas aman.</div>', unsafe_allow_html=True)
             elif cod_cls == "warn":
                 st.markdown(f'<div class="warn-box">⚠️ <strong>COD {cod_val} mg/L</strong> — Melampaui baku mutu. Indikasi pencemaran bahan kimia organik. Perlu investigasi sumber pencemar.</div>', unsafe_allow_html=True)
             else:
@@ -961,6 +937,7 @@ with tab3:
 
     fig_bar = make_subplots(rows=1, cols=3, subplot_titles=["pH", "BOD (mg/L)", "COD (mg/L)"])
 
+    # pH: optimal = 7.25 (tengah 6.5-8.0)
     fig_bar.add_trace(go.Bar(x=["Nilai Kamu"], y=[ph_val],
                               marker_color=("#22C55E" if ph_cls=="good" else "#F59E0B" if ph_cls=="warn" else "#EF4444"),
                               name="pH"), row=1, col=1)
