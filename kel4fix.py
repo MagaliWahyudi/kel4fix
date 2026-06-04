@@ -43,6 +43,17 @@ html, body, [class*="css"] {
     color: var(--text);
 }
 
+/* FIX: Input Box Visibility Fix for Streamlit Number Input */
+div[data-testid="stNumberInput"] input {
+    background-color: #161B25 !important;
+    color: #E8EDF5 !important;
+    border: 1px solid var(--border) !important;
+}
+div[data-testid="stNumberInput"] button {
+    background-color: #242C3D !important;
+    color: #E8EDF5 !important;
+}
+
 /* Hide default streamlit branding */
 #MainMenu, footer, header {visibility: hidden;}
 
@@ -697,7 +708,7 @@ with tab1:
             elif ph_cls == "warn":
                 st.markdown(f'<div class="warn-box">⚠️ <strong>pH {ph_val}</strong> — Nilai ini berada di luar baku mutu optimal. Air menunjukkan tanda-tanda asam/basa ringan. Perlu monitoring lebih lanjut.</div>', unsafe_allow_html=True)
             else:
-                st.markdown(f'<div class="bad-box">🚨 <strong>pH {ph_val}</strong> — Nilai ekstrem! Air terindikasi sangat asam atau basa. Berbahaya bagi biota air dan tidak layak untuk penggunaan langsung.</div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="bad-box">🚨 <strong>pH {ph_val}</strong> — Nilai ekstrem! Air terindikasi sangat asam atau basa. Berbahaya bagi biota air and tidak layak untuk penggunaan langsung.</div>', unsafe_allow_html=True)
 
     # BOD
     with st.expander("🟢  BOD — Biochemical Oxygen Demand", expanded=True):
@@ -959,9 +970,9 @@ with tab3:
 
     st.plotly_chart(fig_bar, use_container_width=True)
 
-# ══════════════════════════════════════════════
+# ─────────────────────────────────────────────
 #  TAB 4 — TENTANG
-# ══════════════════════════════════════════════
+# ─────────────────────────────────────────────
 with tab4:
     st.markdown('<div class="sec-head">Tentang Aplikasi & Kelompok</div>',
                 unsafe_allow_html=True)
