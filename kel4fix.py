@@ -43,7 +43,7 @@ html, body, [class*="css"] {
     color: var(--text);
 }
 
-/* Memperbaiki warna teks kolom input angka di seluruh aplikasi agar kontras & jelas */
+/* Memperbaiki warna teks kolom input angka agar terbaca jelas & kontras di HP */
 div[data-testid="stNumberInput"] input {
     color: #0D1117 !important;
     background-color: #FFFFFF !important;
@@ -186,29 +186,7 @@ section[data-testid="stSidebar"] * { color: var(--text) !important; }
     background: var(--border);
 }
 
-/* IKA Score */
-.ika-ring {
-    text-align: center;
-    padding: 16px 0;
-}
-.ika-score {
-    font-family: 'Space Mono', monospace;
-    font-size: 3.8rem;
-    font-weight: 700;
-    line-height: 1;
-}
-.ika-label {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-top: 6px;
-}
-.ika-cat {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-top: 8px;
-}
-
-/* Info box */
+/* Info box & Notice styling */
 .info-box {
     background: rgba(14,184,164,0.06);
     border: 1px solid rgba(14,184,164,0.25);
@@ -243,35 +221,7 @@ section[data-testid="stSidebar"] * { color: var(--text) !important; }
     line-height: 1.6;
 }
 
-/* About section */
-.about-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 28px 26px;
-    margin-bottom: 18px;
-}
-.about-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    color: var(--teal);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-}
-.about-title {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 10px;
-}
-.about-body {
-    color: var(--muted);
-    font-size: 0.9rem;
-    line-height: 1.7;
-}
-
-/* Custom design button hitung */
+/* Design tombol hitung */
 .stButton > button {
     background: linear-gradient(135deg, var(--teal), var(--blue));
     color: white;
@@ -317,7 +267,7 @@ div[data-testid="stExpander"] summary { color: var(--text) !important; }
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-#  SESSION STATE — default settings & kalkulator
+#  SESSION STATE — Menyimpan hasil hitung rumus
 # ─────────────────────────────────────────────
 if "app_name" not in st.session_state:
     st.session_state.app_name = "AquaChem IKA"
@@ -337,7 +287,8 @@ if "web_desc" not in st.session_state:
         "berdasarkan parameter kimia utama yaitu pH, BOD, dan COD."
     )
 
-# Session state menampung nilai hitung agar tersimpan permanen saat ditekan tombol
+if "ph_direct_value" not in st.session_state:
+    st.session_state.ph_direct_value = 7.0
 if "bod_calc_result" not in st.session_state:
     st.session_state.bod_calc_result = 2.0
 if "cod_calc_result" not in st.session_state:
@@ -420,7 +371,7 @@ def render_ref_table(data):
     st.markdown(html, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-#  SIDEBAR (INPUT NILAI LANGSUNG)
+#  SIDEBAR (INPUT DETEKSI DATA JADI)
 # ─────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
@@ -430,39 +381,33 @@ with st.sidebar:
                     -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
             💧 AquaChem IKA
         </div>
-        <div style="color:#7A8BA6; font-size:0.78rem; margin-top:4px;">
-            Indeks Kualitas Air — Parameter Kimia
-        </div>
     </div>
     <hr style="border:none; border-top:1px solid #242C3D; margin:12px 0 20px 0;">
     """, unsafe_allow_html=True)
 
-    st.markdown("**📥 Input Nilai Parameter Lapangan**")
-    st.info("💡 Isi data di bawah ini langsung untuk melihat kualitas air. Jika ingin menghitung dari hasil praktikum lab, silakan gunakan 'Kalkulator Rumus Titrasi' di Halaman Utama (Tab Analisis).")
+    st.markdown("**📥 Masukkan Nilai Akhir Parameter**")
+    st.info("Ketik langsung data pH, BOD, dan COD yang sudah Anda miliki di sini. Aplikasi akan langsung mendeteksi kualitas air secara otomatis.")
 
-    # Seluruh input diletakkan langsung agar real-time terdeteksi
-    ph_val = st.number_input("pH Air", min_value=0.0, max_value=14.0, value=7.0, step=0.1)
-    
-    bod_val = st.number_input("BOD (mg/L)", min_value=0.0, max_value=200.0, value=st.session_state.bod_calc_result, step=0.1, key="bod_direct")
-    cod_val = st.number_input("COD (mg/L)", min_value=0.0, max_value=500.0, value=st.session_state.cod_calc_result, step=0.1, key="cod_direct")
+    # Input angka utama di sidebar samping
+    ph_val  = st.number_input("Nilai pH Air (In-Situ)", min_value=0.0, max_value=14.0, value=st.session_state.ph_direct_value, step=0.1, key="main_ph_input")
+    bod_val = st.number_input("Nilai BOD (mg/L)", min_value=0.0, max_value=200.0, value=st.session_state.bod_calc_result, step=0.1, key="main_bod_input")
+    cod_val = st.number_input("Nilai COD (mg/L)", min_value=0.0, max_value=500.0, value=st.session_state.cod_calc_result, step=0.1, key="main_cod_input")
 
     st.markdown("<hr style='border:none;border-top:1px solid #242C3D;margin:20px 0;'>", unsafe_allow_html=True)
 
-    with st.expander("⚙️  Pengaturan Aplikasi"):
+    with st.expander("⚙️ Pengaturan Aplikasi"):
         new_app = st.text_input("Nama Aplikasi", value=st.session_state.app_name)
         new_grp = st.text_input("Nama Kelompok", value=st.session_state.group_name)
         new_gdesc = st.text_area("Deskripsi Kelompok", value=st.session_state.group_desc, height=80)
         new_wdesc = st.text_area("Deskripsi Website", value=st.session_state.web_desc, height=100)
-        if st.button("💾  SIMPAN PENGATURAN"):
+        if st.button("💾 SIMPAN PENGATURAN"):
             st.session_state.app_name  = new_app
             st.session_state.group_name  = new_grp
             st.session_state.group_desc  = new_gdesc
             st.session_state.web_desc    = new_wdesc
             st.success("Pengaturan tersimpan!")
 
-# ─────────────────────────────────────────────
-#  CALCULATE CALCULATOR POSITION
-# ─────────────────────────────────────────────
+# Hitung Skor Kualitas Air IKA
 ika_score, ph_si, bod_si, cod_si = calc_ika(ph_val, bod_val, cod_val)
 ika_cat, ika_color = ika_category(ika_score)
 
@@ -471,7 +416,7 @@ bod_label, bod_cls, _ = get_bod_status(bod_val)
 cod_label, cod_cls, _ = get_cod_status(cod_val)
 
 # ─────────────────────────────────────────────
-#  MAIN — HERO
+#  MAIN — HERO BANNER
 # ─────────────────────────────────────────────
 st.markdown(f"""
 <div class="hero">
@@ -481,9 +426,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────
-#  TABS
-# ─────────────────────────────────────────────
+# Tabs menu utama
 tab1, tab2, tab3, tab4 = st.tabs([
     "📊  Analisis Parameter",
     "📖  Referensi Standar",
@@ -492,7 +435,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
 ])
 
 # ══════════════════════════════════════════════
-#  TAB 1 — ANALISIS PARAMETER & KALKULATOR TITRASI
+#  TAB 1 — ANALISIS PARAMETER & KALKULATOR UTAMA
 # ══════════════════════════════════════════════
 with tab1:
     st.markdown('<div class="sec-head">Indeks Kualitas Air (IKA) & Status Real-time</div>', unsafe_allow_html=True)
@@ -512,7 +455,7 @@ with tab1:
         st.markdown(f"""
         <div class="param-card">
           <div class="param-title">pH</div>
-          <div class="param-fullname">Derajat Keasaman</div>
+          <div class="param-fullname">Derajat Keasaman (In-Situ)</div>
           <div class="param-value">{ph_val}</div>
           <div class="param-unit">skala</div>
           {status_chip(ph_label, ph_cls)}
@@ -538,18 +481,20 @@ with tab1:
           {status_chip(cod_label, cod_cls)}
         </div>""", unsafe_allow_html=True)
 
-    # 🚀 FITUR KALKULATOR TITRASI PINDAH KE HALAMAN UTAMA (MAIN PAGE)
-    st.markdown('<div class="sec-head">🧪 Kalkulator Rumus Titrasi Laboratorium</div>', unsafe_allow_html=True)
+    # 🚀 KALKULATOR KHUSUS UNTUK DATA TITRASI LAB (BOD & COD)
+    st.markdown('<div class="sec-head">🧪 Kalkulator Rumus Lab (Titrasi Kimia)</div>', unsafe_allow_html=True)
     
-    with st.expander("👉 KLIK DISINI UNTUK MENGHITUNG NILAI BOD & COD DARI HASIL TITRASI LAB", expanded=False):
-        st.markdown("<p style='color: #7A8BA6; font-size: 0.9rem;'>Masukkan data mentah volumetrik hasil praktikum kelompok Anda untuk mendapatkan nilai konversi mg/L secara otomatis.</p>", unsafe_allow_html=True)
+    with st.expander("👉 JIKA BELUM ADA DATA JADI BOD/COD, KLIK DISINI UNTUK MENGHITUNG DARI HASIL TITRASI LAB", expanded=False):
+        st.markdown("<p style='color: #7A8BA6; font-size: 0.88rem;'>Gunakan panel di bawah ini untuk mengonversi volume miliLiter titrasi hasil praktikum laboratorium menjadi kadar mg/L jadi.</p>", unsafe_allow_html=True)
         
         calc_col1, calc_col2 = st.columns(2)
         
+        # 🧪 1. Kalkulator Rumus BOD (Titrasi Winkler)
         with calc_col1:
-            st.markdown("""<div style="font-weight: bold; color: #0EB8A4; font-family: 'Space Mono', monospace; margin-bottom: 8px;">🔬 Perhitungan BOD (Titrasi Winkler)</div>""", unsafe_allow_html=True)
-            bod_v_blanko   = st.number_input("Volume Titran Blanko (mL)", min_value=0.0, value=10.0, step=0.01, key="main_bod_vb")
-            bod_v_sampel_t = st.number_input("Volume Titran Sampel (mL)", min_value=0.0, value=8.5,  step=0.01, key="main_bod_vs")
+            st.markdown("""<div style="font-weight: bold; color: #1A6EFC; font-family: 'Space Mono', monospace; margin-bottom: 8px;">🔬 Perhitungan BOD (Winkler)</div>""", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.75rem; color:#7A8BA6;'>Rumus: ((Vb - Vs) x N x 8000) / V_sampel</p>", unsafe_allow_html=True)
+            bod_v_blanko   = st.number_input("V Titran Blanko (mL)", min_value=0.0, value=10.0, step=0.01, key="main_bod_vb")
+            bod_v_sampel_t = st.number_input("V Titran Sampel (mL)", min_value=0.0, value=8.5,  step=0.01, key="main_bod_vs")
             bod_n          = st.number_input("Normalitas Na₂S₂O₃ (N)", min_value=0.0, value=0.025, step=0.001, format="%.4f", key="main_bod_n")
             bod_v_sampel   = st.number_input("Volume Sampel Air (mL)", min_value=0.1, value=100.0, step=1.0, key="main_bod_ml")
             
@@ -557,57 +502,53 @@ with tab1:
                 if bod_v_sampel > 0:
                     hasil_bod = round((bod_v_blanko - bod_v_sampel_t) * bod_n * 8000 / bod_v_sampel, 2)
                     st.session_state.bod_calc_result = hasil_bod
-                    st.success(f"Berhasil! Nilai BOD Terhitung: {hasil_bod} mg/L. Silakan klik tombol 'Apply data' di kolom input samping.")
+                    st.success(f"Dihitung: BOD = {hasil_bod} mg/L")
                     st.rerun()
 
+        # 🧪 2. Kalkulator Rumus COD (Titrasi Dikromat)
         with calc_col2:
-            st.markdown("""<div style="font-weight: bold; color: #8B5CF6; font-family: 'Space Mono', monospace; margin-bottom: 8px;">🔬 Perhitungan COD (Titrasi Dikromat)</div>""", unsafe_allow_html=True)
-            cod_v_blanko   = st.number_input("Volume Titran Blanko (mL)", min_value=0.0, value=15.0, step=0.01, key="main_cod_vb")
-            cod_v_sampel_t = st.number_input("Volume Titran Sampel (mL)", min_value=0.0, value=12.0, step=0.01, key="main_cod_vs")
-            cod_n          = st.number_input("Normalitas Titran FAS/KMnO₄ (N)", min_value=0.0, value=0.1,  step=0.001, format="%.4f", key="main_cod_n")
+            st.markdown("""<div style="font-weight: bold; color: #8B5CF6; font-family: 'Space Mono', monospace; margin-bottom: 8px;">🔬 Perhitungan COD (Dikromat)</div>""", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.75rem; color:#7A8BA6;'>Rumus: ((Vb - Vs) x N x 8000) / V_sampel</p>", unsafe_allow_html=True)
+            cod_v_blanko   = st.number_input("V Titran Blanko (mL)", min_value=0.0, value=15.0, step=0.01, key="main_cod_vb")
+            cod_v_sampel_t = st.number_input("V Titran Sampel (mL)", min_value=0.0, value=12.0, step=0.01, key="main_cod_vs")
+            cod_n          = st.number_input("Normalitas FAS (N)", min_value=0.0, value=0.1,  step=0.001, format="%.4f", key="main_cod_n")
             cod_v_sampel   = st.number_input("Volume Sampel Air (mL)", min_value=0.1, value=20.0, step=1.0, key="main_cod_ml")
             
             if st.button("🔢 HITUNG NILAI COD"):
                 if cod_v_sampel > 0:
                     hasil_cod = round((cod_v_blanko - cod_v_sampel_t) * cod_n * 8000 / cod_v_sampel, 2)
                     st.session_state.cod_calc_result = hasil_cod
-                    st.success(f"Berhasil! Nilai COD Terhitung: {hasil_cod} mg/L. Silakan klik tombol 'Apply data' di kolom input samping.")
+                    st.success(f"Dihitung: COD = {hasil_cod} mg/L")
                     st.rerun()
 
-    # Detail Parameter
-    st.markdown('<div class="sec-head">Detail Parameter</div>', unsafe_allow_html=True)
-    # pH Expanders
-    with st.expander("🔵  pH — Derajat Keasaman Air", expanded=True):
+    # Detail Analisis Parameter Deskriptif
+    st.markdown('<div class="sec-head">Detail Analisis Parameter</div>', unsafe_allow_html=True)
+    with st.expander("🔵 pH — Derajat Keasaman Air", expanded=True):
         col_a, col_b = st.columns([1, 1.4])
-        with col_a:
-            st.markdown("**Apa itu pH?**\npH mengukur konsentrasi ion hidrogen dalam air. Nilai di luar rentang 6.5–8.0 menunjukkan adanya gangguan keseimbangan ekosistem perairan.")
+        with col_a: st.markdown("**Apa itu pH?**\npH mengukur tingkat keasaman cairan secara langsung di lapangan (*in-situ*). Rentang optimal baku mutu PP 22/2021 adalah 6.5–8.0.")
         with col_b:
-            if ph_cls == "good": st.markdown(f'<div class="info-box">✅ <strong>pH {ph_val}</strong> — Memenuhi baku mutu air kelas II (6.5–8.0).</div>', unsafe_allow_html=True)
-            elif ph_cls == "warn": st.markdown(f'<div class="warn-box">⚠️ <strong>pH {ph_val}</strong> — Menunjukkan tanda-tanda asam/basa ringan.</div>', unsafe_allow_html=True)
-            else: st.markdown(f'<div class="bad-box">🚨 <strong>pH {ph_val}</strong> — Nilai ekstrem! Air terindikasi tercemar berat.</div>', unsafe_allow_html=True)
+            if ph_cls == "good": st.markdown(f'<div class="info-box">✅ <strong>pH {ph_val}</strong> — Memenuhi standar baku mutu air permukaan kelas II.</div>', unsafe_allow_html=True)
+            elif ph_cls == "warn": st.markdown(f'<div class="warn-box">⚠️ <strong>pH {ph_val}</strong> — Indikasi asam/basa ringan, memerlukan pantauan berkala.</div>', unsafe_allow_html=True)
+            else: st.markdown(f'<div class="bad-box">🚨 <strong>pH {ph_val}</strong> — Kondisi kritis/ekstrem! Air sangat tercemar.</div>', unsafe_allow_html=True)
 
-    # BOD Expanders
-    with st.expander("🟢  BOD — Biochemical Oxygen Demand", expanded=True):
+    with st.expander("🟢 BOD — Biochemical Oxygen Demand", expanded=True):
         col_a, col_b = st.columns([1, 1.4])
-        with col_a:
-            st.markdown("**Apa itu BOD?**\nBOD adalah jumlah oksigen yang dibutuhkan mikroorganisme untuk mengurai bahan organik dalam air.")
+        with col_a: st.markdown("**Apa itu BOD?**\nBOD mengukur oksigen untuk penguraian biologis bakteri. Standar baku mutu nasional Kelas II adalah ≤ 3 mg/L.")
         with col_b:
-            if bod_cls == "good": st.markdown(f'<div class="info-box">✅ <strong>BOD {bod_val} mg/L</strong> — Memenuhi baku mutu. Kandungan bahan organik rendah.</div>', unsafe_allow_html=True)
-            elif bod_cls == "warn": st.markdown(f'<div class="warn-box">⚠️ <strong>BOD {bod_val} mg/L</strong> — Melewati baku mutu (3 mg/L). Air tercemar organik ringan-sedang.</div>', unsafe_allow_html=True)
-            else: st.markdown(f'<div class="bad-box">🚨 <strong>BOD {bod_val} mg/L</strong> — Jauh melampaui baku mutu! Pencemaran organik berat.</div>', unsafe_allow_html=True)
+            if bod_cls == "good": st.markdown(f'<div class="info-box">✅ <strong>BOD {bod_val} mg/L</strong> — Aman, kandungan limbah organik rendah.</div>', unsafe_allow_html=True)
+            elif bod_cls == "warn": st.markdown(f'<div class="warn-box">⚠️ <strong>BOD {bod_val} mg/L</strong> — Melewati batas baku mutu! Tercemar ringan-sedang.</div>', unsafe_allow_html=True)
+            else: st.markdown(f'<div class="bad-box">🚨 <strong>BOD {bod_val} mg/L</strong> — Pencemaran organik berat yang membahayakan biota akuatik.</div>', unsafe_allow_html=True)
 
-    # COD Expanders
-    with st.expander("🔴  COD — Chemical Oxygen Demand", expanded=True):
+    with st.expander("🔴 COD — Chemical Oxygen Demand", expanded=True):
         col_a, col_b = st.columns([1, 1.4])
-        with col_a:
-            st.markdown("**Apa itu COD?**\nCOD mengukur total oksigen yang dibutuhkan untuk mengoksidasi bahan organik secara kimiawi dengan oksidator kuat.")
+        with col_a: st.markdown("**Apa itu COD?**\nCOD adalah kebutuhan oksigen penguraian senyawa kimia organik menggunakan oksidator. Standar baku mutu nasional Kelas II adalah ≤ 25 mg/L.")
         with col_b:
-            if cod_cls == "good": st.markdown(f'<div class="info-box">✅ <strong>COD {cod_val} mg/L</strong> — Memenuhi baku mutu. Batas pencemaran kimia aman.</div>', unsafe_allow_html=True)
-            elif cod_cls == "warn": st.markdown(f'<div class="warn-box">⚠️ <strong>COD {cod_val} mg/L</strong> — Melampaui baku mutu. Indikasi limbah kimia industri/domestik.</div>', unsafe_allow_html=True)
-            else: st.markdown(f'<div class="bad-box">🚨 <strong>COD {cod_val} mg/L</strong> — Sangat tinggi! Indikasi pencemaran kimia berat.</div>', unsafe_allow_html=True)
+            if cod_cls == "good": st.markdown(f'<div class="info-box">✅ <strong>COD {cod_val} mg/L</strong> — Sesuai ambang batas aman baku mutu kimiawi.</div>', unsafe_allow_html=True)
+            elif cod_cls == "warn": st.markdown(f'<div class="warn-box">⚠️ <strong>COD {cod_val} mg/L</strong> — Melewati batas aman! Terindikasi ada pencemaran zat kimia.</div>', unsafe_allow_html=True)
+            else: st.markdown(f'<div class="bad-box">🚨 <strong>COD {cod_val} mg/L</strong> — Konsentrasi senyawa kimia sangat tinggi dan berbahaya.</div>', unsafe_allow_html=True)
 
-    # Rasio BOD/COD
-    st.markdown('<div class="sec-head">Analisis Lanjutan</div>', unsafe_allow_html=True)
+    # Analisis Rasio Lanjutan
+    st.markdown('<div class="sec-head">Analisis Rasio Lanjutan</div>', unsafe_allow_html=True)
     if cod_val > 0:
         ratio = round(bod_val / cod_val, 3)
         col1, col2 = st.columns(2)
@@ -615,44 +556,44 @@ with tab1:
             st.markdown(f"""
             <div class="param-card">
               <div class="param-title">Rasio BOD/COD</div>
-              <div class="param-fullname">Biodegradabilitas Limbah</div>
+              <div class="param-fullname">Tingkat Biodegradabilitas</div>
               <div class="param-value">{ratio}</div>
               <div style="margin-top:10px; font-size:0.83rem; color:#7A8BA6; line-height:1.6;">
-                {'✅ <b style="color:#22C55E">Mudah terurai secara biologis</b> — Rasio > 0.5 menandakan limbah organik yang dapat diolah dengan proses biologis.' if ratio >= 0.5 else ('⚠️ <b style="color:#F59E0B">Cukup dapat terurai</b> — Perlu kombinasi pengolahan biologis dan kimia.' if ratio >= 0.3 else '🔴 <b style="color:#EF4444">Sulit terurai secara biologis</b> — Rasio < 0.3 mengindikasikan bahan kimia organik sulit hancur.')}
+                {'✅ <b style="color:#22C55E">Mudah Terurai</b> — Limbah organik dapat dibersihkan secara alami menggunakan mikroba.' if ratio >= 0.5 else ('⚠️ <b style="color:#F59E0B">Cukup Terurai</b> — Perlu kombinasi sistem biologis-kimia.' if ratio >= 0.3 else '🔴 <b style="color:#EF4444">Sulit Terurai</b> — Didominasi bahan kimia rekalcitran / anorganik keras.')}
               </div>
             </div>""", unsafe_allow_html=True)
         with col2:
             st.markdown(f"""
             <div class="param-card">
-              <div class="param-title">Sub-Indeks Tiap Parameter</div>
-              <div class="param-fullname">Kontribusi terhadap IKA</div>
+              <div class="param-title">Distribusi Bobot Sub-Indeks</div>
+              <div class="param-fullname">Persentase Pengaruh Skor IKA</div>
               <div style="margin-top:14px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="color:#7A8BA6; font-size:0.83rem;">pH (bobot 30%)</span><span style="font-family:'Space Mono',monospace; color:#0EB8A4;">{ph_si}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="color:#7A8BA6; font-size:0.83rem;">pH (Bobot 30%)</span><span style="font-family:'Space Mono',monospace; color:#0EB8A4;">{ph_si}</span></div>
                 <div style="background:#242C3D; border-radius:4px; height:6px; margin-bottom:12px;"><div style="background:#0EB8A4; width:{ph_si}%; height:100%; border-radius:4px;"></div></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="color:#7A8BA6; font-size:0.83rem;">BOD (bobot 35%)</span><span style="font-family:'Space Mono',monospace; color:#1A6EFC;">{bod_si}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="color:#7A8BA6; font-size:0.83rem;">BOD (Bobot 35%)</span><span style="font-family:'Space Mono',monospace; color:#1A6EFC;">{bod_si}</span></div>
                 <div style="background:#242C3D; border-radius:4px; height:6px; margin-bottom:12px;"><div style="background:#1A6EFC; width:{bod_si}%; height:100%; border-radius:4px;"></div></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="color:#7A8BA6; font-size:0.83rem;">COD (bobot 35%)</span><span style="font-family:'Space Mono',monospace; color:#8B5CF6;">{cod_si}</span></div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span style="color:#7A8BA6; font-size:0.83rem;">COD (Bobot 35%)</span><span style="font-family:'Space Mono',monospace; color:#8B5CF6;">{cod_si}</span></div>
                 <div style="background:#242C3D; border-radius:4px; height:6px;"><div style="background:#8B5CF6; width:{cod_si}%; height:100%; border-radius:4px;"></div></div>
               </div>
             </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════
-#  TAB 2 — REFERENSI
+#  TAB 2 — REFERENSI STANDAR
 # ══════════════════════════════════════════════
 with tab2:
-    st.markdown('<div class="sec-head">Baku Mutu Air — PP No. 22 Tahun 2021</div>', unsafe_allow_html=True)
-    st.markdown("#### 🔵 pH — Derajat Keasaman")
+    st.markdown('<div class="sec-head">Baku Mutu Air Nasional (PP No. 22 Tahun 2021)</div>', unsafe_allow_html=True)
+    st.markdown("#### 🔵 pH — Rentang Derajat Keasaman")
     render_ref_table(PH_REF)
-    st.markdown("<br>#### 🟢 BOD — Biochemical Oxygen Demand", unsafe_allow_html=True)
+    st.markdown("<br>#### 🟢 BOD — Biochemical Oxygen Demand (Baku Mutu Kelas II ≤ 3 mg/L)", unsafe_allow_html=True)
     render_ref_table(BOD_REF)
-    st.markdown("<br>#### 🔴 COD — Chemical Oxygen Demand", unsafe_allow_html=True)
+    st.markdown("<br>#### 🔴 COD — Chemical Oxygen Demand (Baku Mutu Kelas II ≤ 25 mg/L)", unsafe_allow_html=True)
     render_ref_table(COD_REF)
 
 # ══════════════════════════════════════════════
-#  TAB 3 — VISUALISASI
+#  TAB 3 — VISUALISASI GRAFIK PLOTLY
 # ══════════════════════════════════════════════
 with tab3:
-    st.markdown('<div class="sec-head">Visualisasi Posisi Parameter</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-head">Visualisasi Grafik Distribusi</div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         fig_gauge = go.Figure(go.Indicator(
@@ -661,18 +602,18 @@ with tab3:
             number={"font": {"color": ika_color, "size": 48}},
             gauge={"axis": {"range": [0, 100]}, "bar": {"color": ika_color, "thickness": 0.25}, "bgcolor": "#161B25"}
         ))
-        fig_gauge.update_layout(paper_bgcolor="#0D1117", plot_bgcolor="#0D1117", height=300)
+        fig_gauge.update_layout(paper_bgcolor="#0D1117", plot_bgcolor="#0D1117", height=300, margin=dict(l=20,r=20,t=40,b=20))
         st.plotly_chart(fig_gauge, use_container_width=True)
     with col2:
-        fig_radar = go.Figure(go.Scatterpolar(r=[ph_si, bod_si, cod_si, ph_si], theta=["pH","BOD","COD","pH"], fill="toself"))
-        fig_radar.update_layout(paper_bgcolor="#0D1117", plot_bgcolor="#0D1117", height=300)
+        fig_radar = go.Figure(go.Scatterpolar(r=[ph_si, bod_si, cod_si, ph_si], theta=["pH","BOD","COD","pH"], fill="toself", fillcolor="rgba(14,184,164,0.15)", line=dict(color="#0EB8A4", width=2)))
+        fig_radar.update_layout(polar=dict(bgcolor="#161B25", radialaxis=dict(visible=True, range=[0, 100])), paper_bgcolor="#0D1117", plot_bgcolor="#0D1117", height=300, margin=dict(l=20,r=20,t=40,b=20))
         st.plotly_chart(fig_radar, use_container_width=True)
 
 # ══════════════════════════════════════════════
-#  TAB 4 — TENTANG
+#  TAB 4 — TENTANG KELOMPOK
 # ══════════════════════════════════════════════
 with tab4:
-    st.markdown('<div class="sec-head">Tentang Aplikasi & Kelompok</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sec-head">Detail Pembuat Aplikasi</div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
-    with col1: st.markdown(f'<div class="about-card"><div class="about-title">💧 {st.session_state.app_name}</div><div class="about-body">{st.session_state.web_desc}</div></div>', unsafe_allow_html=True)
-    with col2: st.markdown(f'<div class="about-card"><div class="about-title">👥 {st.session_state.group_name}</div><div class="about-body">{st.session_state.group_desc.replace("\n", "<br>")}</div></div>', unsafe_allow_html=True)
+    with col1: st.markdown(f'<div class="param-card"><div class="param-title">💧 {st.session_state.app_name}</div><div style="color:var(--muted); font-size:0.9rem; margin-top:10px;">{st.session_state.web_desc}</div></div>', unsafe_allow_html=True)
+    with col2: st.markdown(f'<div class="param-card"><div class="param-title">👥 {st.session_state.group_name}</div><div style="color:var(--muted); font-size:0.9rem; margin-top:10px; line-height:1.6;">{st.session_state.group_desc.replace("\n", "<br>")}</div></div>', unsafe_allow_html=True)
